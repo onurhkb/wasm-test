@@ -1,0 +1,58 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.3.71'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    jcenter()
+    mavenCentral()
+
+    maven {
+        url 'https://dl.bintray.com/wasmer/wasmer-jni'
+    }
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation 'org.wasmer:wasmer-jni-' + inferWasmerJarAppendix() +':0.2.0'
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+String inferWasmerJarAppendix() {
+    def nativePlatform = new org.gradle.nativeplatform.platform.internal.DefaultNativePlatform("current")
+    def arch = nativePlatform.architecture
+    def os = nativePlatform.operatingSystem
+
+    def arch_name
+
+    switch (arch.getName()) {
+        case ["x86_64", "x64", "x86-64"]:
+            arch_name = "amd64"
+            break;
+
+        default:
+            throw new RuntimeException("Architecture " + arch.getName() + " is not supported.")
+    }
+
+    def os_name
+
+    if (os.isMacOsX()) {
+        os_name = "darwin"
+    } else if (os.isLinux()) {
+        os_name = "linux"
+    } else if (os.isWindows()) {
+        os_name = "windows"
+    } else {
+        throw new RuntimeException("Platform " + os.getName() + " is not supported.")
+    }
+
+    return arch_name + "-" + os_name
+}
